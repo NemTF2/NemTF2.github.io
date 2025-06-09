@@ -1,0 +1,1283 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Responde si puedes!</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f8ff;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            color: #333;
+        }
+        .container {
+            background-color: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Estilos para la cinemática de inicio */
+        .intro-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #ffffff 0%, #ffebee 25%, #ffcdd2 50%, #ef9a9a 75%, #e57373 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            transition: opacity 0.5s ease-out;
+        }
+
+        .intro-text {
+            font-size: 4rem;
+            font-weight: bold;
+            color: #ff0000;
+            text-shadow: 3px 3px 6px rgba(0,0,0,0.7);
+            opacity: 0;
+        }
+
+        .intro-text.show {
+            opacity: 1;
+        }
+
+        .intro-hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        h1 {
+            text-align: center;
+            color: #ff0000;
+            margin-bottom: 30px;
+        }
+        .player-status {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+        .player {
+            flex: 1;
+            text-align: center;
+            padding: 10px;
+            background-color: #eee;
+            border-radius: 5px;
+            margin: 0 10px;
+        }
+        .active-player {
+            background-color: #d4edda;
+            border: 2px solid #28a745;
+        }
+        .hearts {
+            color: red;
+            font-size: 24px;
+            letter-spacing: 5px;
+        }
+        .question {
+            background-color: #e9f7fe;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            font-size: 18px;
+        }
+        .timer-container {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .timer {
+            font-size: 48px;
+            font-weight: bold;
+            color: #007bff;
+            background-color: #f8f9fa;
+            border: 3px solid #007bff;
+            border-radius: 50%;
+            width: 80px;
+            height: 80px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto;
+            transition: all 0.3s ease;
+        }
+        .timer.warning {
+            color: #ffc107;
+            border-color: #ffc107;
+            animation: pulse 1s infinite;
+        }
+        .timer.danger {
+            color: #dc3545;
+            border-color: #dc3545;
+            animation: pulse 0.5s infinite;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+        .options {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .option {
+            padding: 10px;
+            background-color: #f1f1f1;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .option:hover {
+            background-color: #e9e9e9;
+        }
+        .option.disabled {
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+        .correct {
+            background-color: #d4edda;
+            border-color: #c3e6cb;
+        }
+        .incorrect {
+            background-color: #f8d7da;
+            border-color: #f5c6cb;
+        }
+        .result-message {
+            text-align: center;
+            font-size: 18px;
+            margin: 20px 0;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        .timeout {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+        .next-btn, .restart-btn, .next-round-btn {
+            display: block;
+            width: 200px;
+            margin: 20px auto;
+            padding: 10px;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .next-btn {
+            background-color: #007bff;
+        }
+        .restart-btn {
+            background-color: #ff0000;
+        }
+        .next-round-btn {
+            background-color: #28a745;
+        }
+        .next-btn:hover {
+            background-color: #0069d9;
+        }
+        .restart-btn:hover {
+            background-color: #cc0000;
+        }
+        .next-round-btn:hover {
+            background-color: #218838;
+        }
+        .game-over {
+            text-align: center;
+            font-size: 24px;
+            font-weight: bold;
+            margin: 30px 0;
+        }
+        .round-info {
+            text-align: center;
+            font-size: 16px;
+            margin-bottom: 20px;
+        }
+        .flag-emoji {
+            font-size: 64px;
+            text-align: center;
+            margin-bottom: 15px;
+        }
+        .question-counter {
+            text-align: center;
+            font-size: 14px;
+            margin-bottom: 15px;
+            color: #666;
+        }
+
+        /* Estilos para la configuración de nombres */
+        .name-setup-container {
+            background-color: white;
+            border-radius: 15px;
+            padding: 40px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+            max-width: 400px;
+            width: 90%;
+        }
+
+        .player-setup {
+            margin-bottom: 30px;
+        }
+
+        .player-name-input {
+            margin-bottom: 20px;
+        }
+
+        .player-name-input label {
+            display: block;
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        .player-name-input input {
+            width: 100%;
+            padding: 12px;
+            font-size: 16px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            box-sizing: border-box;
+            transition: border-color 0.3s;
+        }
+
+        .player-name-input input:focus {
+            outline: none;
+            border-color: #ff0000;
+        }
+
+        .start-game-btn {
+            width: 100%;
+            padding: 15px;
+            font-size: 18px;
+            font-weight: bold;
+            color: white;
+            background-color: #ff0000;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .start-game-btn:hover {
+            background-color: #cc0000;
+        }
+
+        .start-game-btn:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        .round-winner-message {
+            text-align: center;
+            font-size: 20px;
+            margin: 20px 0;
+            padding: 15px;
+            border-radius: 8px;
+            background-color: #d4edda;
+            color: #155724;
+            border: 2px solid #c3e6cb;
+        }
+
+        /* Custom Modal Styles (manteniendo los que se agregaron para reemplazar alerts) */
+        .custom-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5); /* Semi-transparente */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1001;
+        }
+
+        .custom-modal-content {
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            text-align: center;
+            max-width: 350px;
+            width: 90%;
+            /* Removido el borde explícito para mantener la consistencia con el estilo original que no lo tenía */
+        }
+
+        .custom-modal-content p {
+            font-size: 18px;
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .custom-modal-content button {
+            padding: 10px 20px;
+            background-color: #007bff; /* Azul, similar a los botones originales */
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: background-color 0.3s;
+        }
+
+        .custom-modal-content button:hover {
+            background-color: #0069d9;
+        }
+    </style>
+</head>
+<body>
+    <div id="name-setup-screen" class="intro-screen">
+        <div class="name-setup-container">
+            <h2 id="setup-title" style="color: #ff0000; text-align: center; margin-bottom: 30px;">¡Configura los Jugadores!</h2>
+
+            <div class="player-setup">
+                <div class="player-name-input">
+                    <label for="player1-name">Jugador 1:</label>
+                    <input type="text" id="player1-name" maxlength="10" placeholder="Ingresa tu nombre">
+                </div>
+
+                <div class="player-name-input">
+                    <label for="player2-name">Jugador 2:</label>
+                    <input type="text" id="player2-name" maxlength="10" placeholder="Ingresa tu nombre">
+                </div>
+            </div>
+
+            <button id="start-game-btn" class="start-game-btn">¡Comenzar Juego!</button>
+        </div>
+    </div>
+    <div id="intro-screen" class="intro-screen" style="display: none;">
+        <div id="intro-text" class="intro-text">Preparado...</div>
+    </div>
+    <div class="container">
+        <h1>¡Responde si puedes!</h1>
+
+        <div class="round-info" id="round-info">Ronda 1 de 7</div>
+        <div class="question-counter" id="question-counter">Pregunta 1 de 8</div>
+
+        <div class="player-status">
+            <div id="player1" class="player active-player">
+                <h3 id="player1-title">Jugador 1</h3>
+                <div class="hearts" id="player1-hearts"> ❤ ️ ❤ ️ ❤ ️</div>
+            </div>
+            <div id="player2" class="player">
+                <h3 id="player2-title">Jugador 2</h3>
+                <div class="hearts" id="player2-hearts"> ❤ ️ ❤ ️ ❤ ️</div>
+            </div>
+        </div>
+
+        <div class="timer-container">
+            <div id="timer" class="timer">5</div>
+        </div>
+
+        <div id="question-container">
+            <div id="question" class="question"></div>
+            <div id="options" class="options"></div>
+        </div>
+
+        <div id="result-message" class="result-message" style="display: none;"></div>
+
+        <button id="next-btn" class="next-btn" style="display: none;">Siguiente Jugador</button>
+        <button id="restart-btn" class="restart-btn" style="display: none;">Reiniciar Juego</button>
+        <!-- The next round button is hidden as the transition is now automatic -->
+        <button id="next-round-btn" class="next-round-btn" style="display: none;">Siguiente Ronda</button>
+    </div>
+    <script>
+        // Preguntas para diferentes rondas, cada objeto de ronda contiene un set único de preguntas.
+        const allQuestions = {
+            round1: [
+                {
+                    question: "¿Cuál es el río más largo del mundo?",
+                    options: ["Nilo", "Amazonas", "Mississippi", "Yangtsé"],
+                    correctIndex: 1
+                },
+                {
+                    question: "¿Quién pintó La Mona Lisa?",
+                    options: ["Vincent van Gogh", "Pablo Picasso", "Leonardo da Vinci", "Miguel Ángel"],
+                    correctIndex: 2
+                },
+                {
+                    question: "¿Cuál es el planeta más grande del Sistema Solar?",
+                    options: ["Tierra", "Júpiter", "Saturno", "Neptuno"],
+                    correctIndex: 1
+                },
+                {
+                    question: "¿En qué año comenzó la Segunda Guerra Mundial?",
+                    options: ["1939", "1941", "1945", "1938"],
+                    correctIndex: 0
+                },
+                {
+                    question: "¿Cuál es la capital de Australia?",
+                    options: ["Sydney", "Melbourne", "Canberra", "Brisbane"],
+                    correctIndex: 2
+                },
+                {
+                    question: "¿Cuál es el elemento químico más abundante en la corteza terrestre?",
+                    options: ["Hierro", "Silicio", "Aluminio", "Oxígeno"],
+                    correctIndex: 3
+                },
+                {
+                    question: "¿Qué bandera es esta?  🇯🇵 ",
+                    options: ["China", "Corea del Sur", "Japón", "Tailandia"],
+                    correctIndex: 2,
+                    hasFlag: true
+                },
+                {
+                    question: "¿Qué bandera es esta?  🇧🇷 ",
+                    options: ["Argentina", "Colombia", "Brasil", "Uruguay"],
+                    correctIndex: 2,
+                    hasFlag: true
+                }
+            ],
+            round2: [
+                {
+                    question: "¿Cuál es el océano más grande del mundo?",
+                    options: ["Atlántico", "Índico", "Pacífico", "Ártico"],
+                    correctIndex: 2
+                },
+                {
+                    question: "¿En qué país se encuentra la Gran Muralla China?",
+                    options: ["India", "Japón", "Corea del Sur", "China"],
+                    correctIndex: 3
+                },
+                {
+                    question: "¿Cuántos huesos tiene el cuerpo humano adulto?",
+                    options: ["206", "200", "212", "198"],
+                    correctIndex: 0
+                },
+                {
+                    question: "¿Quién escribió 'Cien años de soledad'?",
+                    options: ["Julio Cortázar", "Mario Vargas Llosa", "Gabriel García Márquez", "Pablo Neruda"],
+                    correctIndex: 2
+                },
+                {
+                    question: "¿Cuál es el animal terrestre más rápido?",
+                    options: ["Leopardo", "Guepardo", "Antílope", "Avestruz"],
+                    correctIndex: 1
+                },
+                {
+                    question: "¿Qué gas es responsable del color azul del cielo?",
+                    options: ["Nitrógeno", "Oxígeno", "Dióxido de carbono", "Argón"],
+                    correctIndex: 0
+                },
+                {
+                    question: "¿Qué bandera es esta?  🇫🇷 ",
+                    options: ["Alemania", "Italia", "Francia", "Bélgica"],
+                    correctIndex: 2,
+                    hasFlag: true
+                },
+                {
+                    question: "¿Qué bandera es esta?  🇺🇸 ",
+                    options: ["Canadá", "México", "Estados Unidos", "Reino Unido"],
+                    correctIndex: 2,
+                    hasFlag: true
+                }
+            ],
+            round3: [
+                {
+                    question: "¿Cuál es el país más pequeño del mundo?",
+                    options: ["Mónaco", "Ciudad del Vaticano", "San Marino", "Liechtenstein"],
+                    correctIndex: 1
+                },
+                {
+                    question: "¿Cuál es la capital de Canadá?",
+                    options: ["Toronto", "Vancouver", "Montreal", "Ottawa"],
+                    correctIndex: 3
+                },
+                {
+                    question: "¿Qué deporte se juega en Wimbledon?",
+                    options: ["Golf", "Tenis", "Bádminton", "Fútbol"],
+                    correctIndex: 1
+                },
+                {
+                    question: "¿Quién descubrió América?",
+                    options: ["Fernando de Magallanes", "Cristóbal Colón", "Vasco da Gama", "Marco Polo"],
+                    correctIndex: 1
+                },
+                {
+                    question: "¿Cuál es la montaña más alta del mundo?",
+                    options: ["K2", "Kangchenjunga", "Lhotse", "Everest"],
+                    correctIndex: 3
+                },
+                {
+                    question: "¿Cuál es el principal componente del gas natural?",
+                    options: ["Propano", "Butano", "Metano", "Etano"],
+                    correctIndex: 2
+                },
+                {
+                    question: "¿Qué bandera es esta?  🇮🇹 ",
+                    options: ["Irlanda", "Hungría", "México", "Italia"],
+                    correctIndex: 3,
+                    hasFlag: true
+                },
+                {
+                    question: "¿Qué bandera es esta?  🇩🇪 ",
+                    options: ["Bélgica", "Países Bajos", "Alemania", "Austria"],
+                    correctIndex: 2,
+                    hasFlag: true
+                }
+            ],
+            round4: [
+                {
+                    question: "¿Cuál es el desierto más grande del mundo?",
+                    options: ["Sahara", "Gobi", "Atacama", "Antártico"],
+                    correctIndex: 3
+                },
+                {
+                    question: "¿En qué ciudad se encuentra la Torre Eiffel?",
+                    options: ["Londres", "Roma", "París", "Berlín"],
+                    correctIndex: 2
+                },
+                {
+                    question: "¿Cuál es la obra más famosa de William Shakespeare?",
+                    options: ["Romeo y Julieta", "Hamlet", "Macbeth", "Otelo"],
+                    correctIndex: 1
+                },
+                {
+                    question: "¿Cuántos continentes hay en el mundo?",
+                    options: ["5", "6", "7", "8"],
+                    correctIndex: 2
+                },
+                {
+                    question: "¿Qué planeta es conocido como el 'Planeta Rojo'?",
+                    options: ["Marte", "Venus", "Júpiter", "Urano"],
+                    correctIndex: 0
+                },
+                {
+                    question: "¿Cuál es el metal más abundante en la Tierra?",
+                    options: ["Hierro", "Aluminio", "Cobre", "Oro"],
+                    correctIndex: 1
+                },
+                {
+                    question: "¿Qué bandera es esta?  �🇧 ",
+                    options: ["Australia", "Nueva Zelanda", "Reino Unido", "Canadá"],
+                    correctIndex: 2,
+                    hasFlag: true
+                },
+                {
+                    question: "¿Qué bandera es esta?  🇲🇽 ",
+                    options: ["Italia", "España", "México", "Portugal"],
+                    correctIndex: 2,
+                    hasFlag: true
+                }
+            ],
+            round5: [
+                {
+                    question: "¿Cuál es la capital de España?",
+                    options: ["Barcelona", "Sevilla", "Valencia", "Madrid"],
+                    correctIndex: 3
+                },
+                {
+                    question: "¿Quién compuso 'Las cuatro estaciones'?",
+                    options: ["Bach", "Mozart", "Beethoven", "Vivaldi"],
+                    correctIndex: 3
+                },
+                {
+                    question: "¿Cuál es el animal que vive más tiempo?",
+                    options: ["Tortuga de Galápagos", "Ballena de Groenlandia", "Almeja de Islandia", "Tiburón de Groenlandia"],
+                    correctIndex: 3
+                },
+                {
+                    question: "¿Cuál es el único mamífero que puede volar?",
+                    options: ["Murciélago", "Ardilla voladora", "Planeador de azúcar", "Colugo"],
+                    correctIndex: 0
+                },
+                {
+                    question: "¿Cuál es la célula más grande del cuerpo humano?",
+                    options: ["Neurona", "Ovocito", "Glóbulo rojo", "Espermatozoide"],
+                    correctIndex: 1
+                },
+                {
+                    question: "¿Qué tipo de energía produce el sol?",
+                    options: ["Energía eólica", "Energía geotérmica", "Energía solar", "Energía hidráulica"],
+                    correctIndex: 2
+                },
+                {
+                    question: "¿Qué bandera es esta?  🇨🇦 ",
+                    options: ["Estados Unidos", "Australia", "Canadá", "Reino Unido"],
+                    correctIndex: 2,
+                    hasFlag: true
+                },
+                {
+                    question: "¿Qué bandera es esta?  🇦🇷 ",
+                    options: ["Uruguay", "Chile", "Argentina", "Paraguay"],
+                    correctIndex: 2,
+                    hasFlag: true
+                }
+            ],
+            round6: [
+                {
+                    question: "¿Cuál es la moneda de Japón?",
+                    options: ["Won", "Yuan", "Yen", "Dólar"],
+                    correctIndex: 2
+                },
+                {
+                    question: "¿Qué famoso científico formuló la teoría de la relatividad?",
+                    options: ["Isaac Newton", "Albert Einstein", "Stephen Hawking", "Nikola Tesla"],
+                    correctIndex: 1
+                },
+                {
+                    question: "¿Cuál es la flor nacional de los Países Bajos?",
+                    options: ["Rosa", "Girasol", "Tulipán", "Orquídea"],
+                    correctIndex: 2
+                },
+                {
+                    question: "¿Cuántos lados tiene un heptágono?",
+                    options: ["6", "7", "8", "9"],
+                    correctIndex: 1
+                },
+                {
+                    question: "¿Cuál es la bebida alcohólica más consumida en el mundo?",
+                    options: ["Vino", "Vodka", "Cerveza", "Whisky"],
+                    correctIndex: 2
+                },
+                {
+                    question: "¿Cuál es la capa más externa de la Tierra?",
+                    options: ["Manto", "Núcleo", "Corteza", "Astenosfera"],
+                    correctIndex: 2
+                },
+                {
+                    question: "¿Qué bandera es esta?  🇷🇺 ",
+                    options: ["Polonia", "Ucrania", "Rusia", "Serbia"],
+                    correctIndex: 2,
+                    hasFlag: true
+                },
+                {
+                    question: "¿Qué bandera es esta?  🇨🇳 ",
+                    options: ["Japón", "Corea del Norte", "China", "Vietnam"],
+                    correctIndex: 2,
+                    hasFlag: true
+                }
+            ],
+            round7: [
+                {
+                    question: "¿Cuál es el elemento más ligero de la tabla periódica?",
+                    options: ["Oxígeno", "Helio", "Hidrógeno", "Litio"],
+                    correctIndex: 2
+                },
+                {
+                    question: "¿Quién escribió 'Don Quijote de la Mancha'?",
+                    options: ["Federico García Lorca", "Miguel de Cervantes", "Lope de Vega", "Gabriel García Márquez"],
+                    correctIndex: 1
+                },
+                {
+                    question: "¿Cuál es el hueso más pequeño del cuerpo humano?",
+                    options: ["Estribo", "Martillo", "Yunque", "Fémur"],
+                    correctIndex: 0
+                },
+                {
+                    question: "¿Cuál es la ciudad conocida como 'La Ciudad Eterna'?",
+                    options: ["París", "Atenas", "Roma", "Londres"],
+                    correctIndex: 2
+                },
+                {
+                    question: "¿Cuál es el proceso por el cual las plantas producen su alimento?",
+                    options: ["Respiración", "Transpiración", "Fotosíntesis", "Fermentación"],
+                    correctIndex: 2
+                },
+                {
+                    question: "¿Cuál es el país más poblado del mundo?",
+                    options: ["India", "Estados Unidos", "China", "Indonesia"],
+                    correctIndex: 0
+                },
+                {
+                    question: "¿Qué bandera es esta?  🇮🇳 ",
+                    options: ["Pakistán", "Bangladesh", "India", "Nepal"],
+                    correctIndex: 2,
+                    hasFlag: true
+                },
+                {
+                    question: "¿Qué bandera es esta?  🇦🇺 ",
+                    options: ["Nueva Zelanda", "Canadá", "Australia", "Reino Unido"],
+                    correctIndex: 2,
+                    hasFlag: true
+                }
+            ]
+        };
+        // Variables del juego
+        let currentPlayer = 1;
+        let player1Lives = 3;
+        let player2Lives = 3;
+        let currentQuestionIndex = 0;
+        let questions = []; // This variable is now used to store questions for the current round
+        let currentRound = 1;
+        let questionsAnswered = 0;
+        const totalQuestionsPerRound = 8; // Moved to const as it's fixed
+        let timeLeft = 5;
+        let timerInterval;
+        let questionAnswered = false;
+        let player1Name = "Jugador 1";
+        let player2Name = "Jugador 2";
+        let gameStarted = false;
+
+        // Global Set para rastrear todas las preguntas usadas en todo el juego (todas las rondas)
+        let usedQuestionIdsGlobal = new Set();
+
+        // Un array plano de todas las preguntas con IDs únicos
+        const allGameQuestionsFlat = [];
+        // Poblamos este array una vez cuando el script se carga
+        for (const roundKey in allQuestions) {
+            if (allQuestions.hasOwnProperty(roundKey)) { // Asegurarse de que sea una propiedad propia
+                allQuestions[roundKey].forEach((q, index) => {
+                    allGameQuestionsFlat.push({
+                        ...q,
+                        uniqueId: `${roundKey}-${index}` // Asignar un ID único a cada pregunta
+                    });
+                });
+            }
+        }
+
+        // Preguntas que se usarán en la ronda activa actual
+        let questionsForCurrentRound = []; // Nuevo array para almacenar las preguntas seleccionadas para la ronda actual
+
+        // Elementos DOM
+        const questionElement = document.getElementById("question");
+        const optionsElement = document.getElementById("options");
+        const resultMessage = document.getElementById("result-message");
+        const nextButton = document.getElementById("next-btn");
+        const restartButton = document.getElementById("restart-btn");
+        const nextRoundButton = document.getElementById("next-round-btn");
+        const player1Element = document.getElementById("player1");
+        const player2Element = document.getElementById("player2");
+        const player1HeartsElement = document.getElementById("player1-hearts");
+        const player2HeartsElement = document.getElementById("player2-hearts");
+        const player1TitleElement = document.getElementById("player1-title");
+        const player2TitleElement = document.getElementById("player2-title");
+        const roundInfoElement = document.getElementById("round-info");
+        const questionCounterElement = document.getElementById("question-counter");
+        const timerElement = document.getElementById("timer");
+        const nameSetupScreen = document.getElementById("name-setup-screen");
+        const introScreen = document.getElementById("intro-screen");
+        const introText = document.getElementById("intro-text");
+        const player1NameInput = document.getElementById("player1-name");
+        const player2NameInput = document.getElementById("player2-name");
+        const startGameBtn = document.getElementById("start-game-btn");
+        const setupTitle = document.getElementById("setup-title");
+
+        /**
+         * Muestra un modal personalizado en lugar de la función alert().
+         * @param {string} message - El mensaje a mostrar en el modal.
+         */
+        function showCustomModal(message) {
+            const modal = document.createElement('div');
+            modal.className = 'custom-modal';
+
+            const modalContent = document.createElement('div');
+            modalContent.className = 'custom-modal-content';
+
+            const messageElement = document.createElement('p');
+            messageElement.textContent = message;
+
+            const closeButton = document.createElement('button');
+            closeButton.textContent = 'OK';
+            closeButton.onclick = () => document.body.removeChild(modal);
+
+            modalContent.appendChild(messageElement);
+            modalContent.appendChild(closeButton);
+            modal.appendChild(modalContent);
+            document.body.appendChild(modal);
+        }
+
+        // Función para actualizar el título de configuración
+        function updateSetupTitle() {
+            if (gameStarted) {
+                setupTitle.textContent = `¡Ronda ${currentRound} - Configura los Jugadores!`;
+            } else {
+                setupTitle.textContent = "¡Configura los Jugadores!";
+            }
+        }
+        // Función para limpiar inputs
+        function clearInputs() {
+            player1NameInput.value = "";
+            player2NameInput.value = "";
+        }
+        // Función para configurar nombres de jugadores
+        function setupPlayerNames() {
+            startGameBtn.addEventListener("click", () => {
+                const name1 = player1NameInput.value.trim();
+                const name2 = player2NameInput.value.trim();
+
+                if (name1 === "" || name2 === "") {
+                    showCustomModal("Por favor, ingresa nombres para ambos jugadores.");
+                    return;
+                }
+
+                if (name1 === name2) {
+                    showCustomModal("Los nombres de los jugadores deben ser diferentes.");
+                    return;
+                }
+
+                player1Name = name1;
+                player2Name = name2;
+
+                // Actualizar los títulos de los jugadores
+                player1TitleElement.textContent = player1Name;
+                player2TitleElement.textContent = player2Name;
+
+                // Ocultar pantalla de configuración y mostrar cinemática
+                nameSetupScreen.style.display = "none";
+                introScreen.style.display = "flex";
+                playIntroSequence();
+            });
+        }
+        // Función para mostrar la cinemática de inicio
+        function playIntroSequence() {
+            const messages = ["Preparado...", "Listo...", "¡RESPONDE!"];
+            let currentMessageIndex = 0;
+            function showNextMessage() {
+                if (currentMessageIndex < messages.length) {
+                    // Ocultar texto actual
+                    introText.classList.remove("show");
+
+                    setTimeout(() => {
+                        // Cambiar texto y mostrar inmediatamente
+                        introText.textContent = messages[currentMessageIndex];
+                        introText.classList.add("show");
+
+                        currentMessageIndex++;
+
+                        // Siguiente mensaje después de menos tiempo para efecto más frenético
+                        setTimeout(showNextMessage, 800);
+                    }, 100);
+                } else {
+                    // Ocultar pantalla de introducción y comenzar el juego
+                    setTimeout(() => {
+                        introScreen.classList.add("intro-hidden");
+                        setTimeout(() => {
+                            introScreen.style.display = "none";
+                            initGame();
+                        }, 500);
+                    }, 600);
+                }
+            }
+            showNextMessage();
+        }
+        // Iniciar juego
+        function initGame() {
+            gameStarted = true;
+            currentPlayer = 1;
+            player1Lives = 3;
+            player2Lives = 3;
+            currentQuestionIndex = 0;
+            questionsAnswered = 0; // Reiniciar para la nueva partida
+            usedQuestionIdsGlobal = new Set(); // IMPORTANTE: Solo reiniciar el Set global de preguntas usadas al iniciar un NUEVO JUEGO
+
+            setupRound(); // Configura la primera ronda
+            updateHearts();
+            updatePlayerStatus();
+            updateQuestionCounter();
+            loadNextQuestion();
+
+            nextButton.style.display = "none";
+            restartButton.style.display = "none";
+            nextRoundButton.style.display = "none";
+            resultMessage.style.display = "none";
+            timerElement.style.display = "inline-flex"; // Asegura que el temporizador sea visible
+        }
+
+        /**
+         * Configura las preguntas para la ronda actual, seleccionando preguntas únicas globalmente.
+         * Se asegura de que no se repitan preguntas de rondas anteriores.
+         */
+        function setupRound() {
+            questionsForCurrentRound = []; // Reiniciar las preguntas para la nueva ronda
+
+            // Filtra todas las preguntas planas del juego que aún no se han usado globalmente
+            let globallyAvailableQuestions = allGameQuestionsFlat.filter(q => !usedQuestionIdsGlobal.has(q.uniqueId));
+
+            // Si no hay suficientes preguntas disponibles para la ronda completa
+            if (globallyAvailableQuestions.length < totalQuestionsPerRound) {
+                // Si no hay suficientes preguntas únicas para una ronda completa, el juego termina.
+                endGame("¡Se han agotado todas las preguntas únicas! Juego terminado.");
+                return;
+            }
+
+            // Selecciona 'totalQuestionsPerRound' preguntas únicas para la ronda actual de forma aleatoria
+            // Asegura que las preguntas se extraigan del pool disponible para evitar duplicados en la selección
+            let tempAvailableQuestions = [...globallyAvailableQuestions]; // Copia para evitar modificar el array original del filtro
+
+            for (let i = 0; i < totalQuestionsPerRound; i++) {
+                const randomIndex = Math.floor(Math.random() * tempAvailableQuestions.length);
+                const selectedQuestion = tempAvailableQuestions[randomIndex];
+                questionsForCurrentRound.push(selectedQuestion);
+
+                // Eliminar la pregunta seleccionada del pool temporal para esta iteración de selección
+                tempAvailableQuestions.splice(randomIndex, 1);
+            }
+
+            roundInfoElement.textContent = `Ronda ${currentRound} de 7`;
+            questionsAnswered = 0; // Reiniciar preguntas respondidas para la nueva ronda
+            updateQuestionCounter(); // Actualizar contador de preguntas
+        }
+        function updateQuestionCounter() {
+            questionCounterElement.textContent = `Pregunta ${questionsAnswered + 1} de ${totalQuestionsPerRound}`;
+        }
+        function startTimer() {
+            timeLeft = 5;
+            questionAnswered = false;
+            updateTimerDisplay();
+
+            clearInterval(timerInterval); // Limpia cualquier temporizador existente
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                updateTimerDisplay();
+
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    if (!questionAnswered) {
+                        handleTimeout();
+                    }
+                }
+            }, 1000);
+        }
+        function updateTimerDisplay() {
+            timerElement.textContent = timeLeft;
+            timerElement.classList.remove('warning', 'danger');
+            if (timeLeft <= 2) {
+                timerElement.classList.add('danger');
+            } else if (timeLeft <= 3) {
+                timerElement.classList.add('warning');
+            }
+        }
+        function handleTimeout() {
+            questionAnswered = true;
+
+            const options = document.querySelectorAll(".option");
+            options.forEach(option => {
+                option.style.pointerEvents = "none";
+                option.classList.add("disabled");
+            });
+
+            // Obtiene el índice correcto de la pregunta actual utilizando questionsForCurrentRound y questionsAnswered
+            const correctOptionIndex = getCurrentCorrectIndex();
+            const correctOption = document.querySelector(`.option:nth-child(${correctOptionIndex + 1})`);
+            if (correctOption) {
+                correctOption.classList.add("correct");
+            }
+
+            if (currentPlayer === 1) {
+                player1Lives--;
+            } else {
+                player2Lives--;
+            }
+
+            updateHearts();
+
+            resultMessage.textContent = "¡Se acabó el tiempo! Perdiste una vida.";
+            resultMessage.className = "result-message timeout";
+            resultMessage.style.display = "block";
+
+            // Verificar si el juego o la ronda han terminado después de un tiempo de espera
+            if (player1Lives === 0 || player2Lives === 0) {
+                endGame();
+            } else {
+                 // Incrementar questionsAnswered solo si el juego no ha terminado y es una pregunta válida
+                questionsAnswered++;
+                updateQuestionCounter();
+                if (questionsAnswered >= totalQuestionsPerRound) {
+                    checkRoundWinner();
+                } else {
+                    nextButton.style.display = "block";
+                }
+            }
+        }
+
+        /**
+         * Obtiene el índice de la respuesta correcta para la pregunta actual.
+         * @returns {number} El índice de la respuesta correcta.
+         */
+        function getCurrentCorrectIndex() {
+            // Usa questionsForCurrentRound y questionsAnswered para obtener la pregunta actual
+            const currentQuestionData = questionsForCurrentRound[questionsAnswered];
+            return currentQuestionData ? currentQuestionData.correctIndex : 0;
+        }
+
+        /**
+         * Carga la siguiente pregunta para ser mostrada al jugador.
+         * Esta pregunta ya ha sido preseleccionada para la ronda actual en `setupRound`.
+         */
+        function loadNextQuestion() {
+            // Si ya se respondieron todas las preguntas para esta ronda, pasa a checkRoundWinner
+            if (questionsAnswered >= totalQuestionsPerRound) {
+                checkRoundWinner();
+                return;
+            }
+
+            // Obtiene la pregunta actual de la lista preseleccionada para la ronda
+            const currentQuestion = questionsForCurrentRound[questionsAnswered];
+
+            // Agrega el ID único de esta pregunta al conjunto global de preguntas ya usadas
+            usedQuestionIdsGlobal.add(currentQuestion.uniqueId);
+
+            // Limpia cualquier elemento de bandera anterior antes de agregar uno nuevo si la pregunta lo requiere
+            while (questionElement.querySelector(".flag-emoji")) {
+                questionElement.querySelector(".flag-emoji").remove();
+            }
+
+            if (currentQuestion.hasFlag) {
+                const questionText = currentQuestion.question;
+                const flagMatch = questionText.match(/ 🇯🇵 | 🇧🇷 | 🇫🇷 | 🇺🇸 | 🇮🇹 | 🇩🇪 | 🇬🇧 | 🇲🇽 | 🇨🇦 | 🇦🇷 | 🇷🇺 | 🇨🇳 | 🇮🇳 | 🇦🇺 /);
+                const flagEmoji = flagMatch ? flagMatch[0] : '';
+                const questionWithoutFlag = questionText.replace(/ 🇯🇵 | 🇧🇷 | 🇫🇷 | 🇺🇸 | 🇮🇹 | 🇩🇪 | 🇬🇧 | 🇲🇽 | 🇨🇦 | 🇦🇷 | 🇷🇺 | 🇨🇳 | 🇮🇳 | 🇦🇺 /, '').trim();
+
+                const flagElement = document.createElement("div");
+                flagElement.className = "flag-emoji";
+                flagElement.textContent = flagEmoji;
+
+                questionElement.textContent = questionWithoutFlag;
+                questionElement.prepend(flagElement);
+            } else {
+                questionElement.textContent = currentQuestion.question;
+            }
+
+            optionsElement.innerHTML = ""; // Limpia las opciones anteriores
+
+            currentQuestion.options.forEach((option, index) => {
+                const optionElement = document.createElement("div");
+                optionElement.className = "option";
+                optionElement.textContent = option;
+                // Asigna el evento de clic para verificar la respuesta
+                optionElement.addEventListener("click", () => checkAnswer(index, currentQuestion.correctIndex));
+                optionsElement.appendChild(optionElement);
+            });
+
+            startTimer(); // Inicia el temporizador para la nueva pregunta
+        }
+
+        /**
+         * Comprueba la respuesta seleccionada por el jugador.
+         * Actualiza vidas, mensajes de resultado y el estado del juego/ronda.
+         * @param {number} selectedIndex - El índice de la opción seleccionada por el jugador.
+         * @param {number} correctIndex - El índice de la respuesta correcta.
+         */
+        function checkAnswer(selectedIndex, correctIndex) {
+            if (questionAnswered) return; // Evita que se respondan múltiples veces
+
+            questionAnswered = true;
+            clearInterval(timerInterval); // Detiene el temporador
+            questionsAnswered++; // Incrementa el contador de preguntas respondidas
+            updateQuestionCounter();
+
+            const options = document.querySelectorAll(".option");
+
+            // Deshabilita todas las opciones después de la respuesta
+            options.forEach(option => {
+                option.style.pointerEvents = "none";
+            });
+
+            options[correctIndex].classList.add("correct"); // Marca la opción correcta
+
+            if (selectedIndex === correctIndex) {
+                resultMessage.textContent = "¡Respuesta correcta!";
+                resultMessage.className = "result-message success";
+            } else {
+                options[selectedIndex].classList.add("incorrect"); // Marca la opción incorrecta seleccionada
+                resultMessage.textContent = "¡Respuesta incorrecta!";
+                resultMessage.className = "result-message error";
+
+                // Reduce la vida del jugador actual si la respuesta es incorrecta
+                if (currentPlayer === 1) {
+                    player1Lives--;
+                } else {
+                    player2Lives--;
+                }
+
+                updateHearts(); // Actualiza la visualización de las vidas
+            }
+
+            resultMessage.style.display = "block"; // Muestra el mensaje de resultado
+
+            // Comprueba el estado del juego o de la ronda
+            if (player1Lives === 0 || player2Lives === 0) {
+                endGame(); // Termina el juego si un jugador se queda sin vidas
+            } else if (questionsAnswered >= totalQuestionsPerRound) {
+                checkRoundWinner(); // Termina la ronda si todas las preguntas han sido respondidas
+            } else {
+                nextButton.style.display = "block"; // Muestra el botón para el siguiente jugador
+            }
+        }
+        function checkRoundWinner() {
+            clearInterval(timerInterval); // Detiene el temporizador cuando la ronda termina
+
+            let winner;
+
+            if (player1Lives > player2Lives) {
+                winner = player1Name;
+            } else if (player2Lives > player1Lives) {
+                winner = player2Name;
+            } else {
+                winner = "Empate entre ambos jugadores";
+            }
+
+            endRound(winner); // Llama a la función para finalizar la ronda
+        }
+
+        /**
+         * Finaliza la ronda actual, muestra los resultados y gestiona la transición.
+         * @param {string} winner - El nombre del ganador de la ronda o "Empate entre ambos jugadores".
+         */
+        function endRound(winner) {
+            clearInterval(timerInterval); // Asegura que el temporizador esté detenido
+
+            const gameOverMessage = document.createElement("div");
+            gameOverMessage.className = "game-over";
+
+            if (winner === "Empate entre ambos jugadores") {
+                gameOverMessage.textContent = "¡La ronda ha terminado en empate!";
+            } else {
+                gameOverMessage.textContent = `¡${winner} ha ganado la ronda!`;
+            }
+
+            // Agregar mensaje de resultados detallado
+            const roundWinnerMessage = document.createElement("div");
+            roundWinnerMessage.className = "round-winner-message";
+            roundWinnerMessage.innerHTML = `
+                <strong>Resultados de la Ronda ${currentRound}:</strong><br>
+                ${player1Name}: ${player1Lives} vidas restantes<br>
+                ${player2Name}: ${player2Lives} vidas restantes
+            `;
+
+            questionElement.textContent = ""; // Limpia la pregunta
+            optionsElement.innerHTML = ""; // Limpia las opciones
+            optionsElement.appendChild(gameOverMessage);
+            optionsElement.appendChild(roundWinnerMessage);
+
+            timerElement.style.display = "none"; // Oculta el temporizador
+
+            nextButton.style.display = "none"; // Oculta el botón de siguiente jugador
+            restartButton.style.display = "block"; // Muestra el botón de reiniciar juego
+
+            // Procede automáticamente a la siguiente ronda si no es la última y al menos un jugador tiene vidas
+            if (currentRound < 7 && (player1Lives > 0 || player2Lives > 0)) {
+                // Introduce un ligero retraso antes de pasar a la siguiente ronda para leer los resultados
+                setTimeout(() => {
+                    nextRound(); // Llama a nextRound para iniciar la siguiente ronda
+                }, 3000); // Retraso de 3 segundos
+            } else {
+                 // Si es la última ronda o game over, oculta el botón de siguiente ronda
+                 nextRoundButton.style.display = "none";
+            }
+        }
+
+        /**
+         * Finaliza el juego, determina el ganador final y muestra el mensaje.
+         */
+        function endGame() {
+            clearInterval(timerInterval); // Detiene cualquier temporizador
+            let finalWinner = "";
+
+            if (player1Lives > player2Lives) {
+                finalWinner = player1Name;
+            } else if (player2Lives > player1Lives) {
+                finalWinner = player2Name;
+            } else {
+                finalWinner = "Empate general"; // Si el juego termina en empate
+            }
+            const gameOverMessage = document.createElement("div");
+            gameOverMessage.className = "game-over";
+
+            if (finalWinner === "Empate general") {
+                gameOverMessage.textContent = `¡Juego Terminado! Empate general.`;
+            } else {
+                gameOverMessage.textContent = `¡Juego Terminado! ${finalWinner} es el ganador!`;
+            }
+
+            questionElement.textContent = ""; // Limpia la pregunta
+            optionsElement.innerHTML = ""; // Limpia las opciones
+            optionsElement.appendChild(gameOverMessage); // Muestra el mensaje de fin de juego
+
+            timerElement.style.display = "none"; // Oculta el temporizador
+
+            nextButton.style.display = "none"; // Oculta el botón de siguiente
+            nextRoundButton.style.display = "none"; // No hay más rondas después del fin del juego
+            restartButton.style.display = "block"; // Muestra el botón para reiniciar el juego
+        }
+        function updateHearts() {
+            player1HeartsElement.textContent = " ❤ ️".repeat(player1Lives);
+            player2HeartsElement.textContent = " ❤ ️".repeat(player2Lives);
+        }
+        function updatePlayerStatus() {
+            if (currentPlayer === 1) {
+                player1Element.classList.add("active-player");
+                player2Element.classList.remove("active-player");
+            } else {
+                player1Element.classList.remove("active-player");
+                player2Element.classList.add("active-player");
+            }
+        }
+        function nextPlayer() {
+            currentPlayer = currentPlayer === 1 ? 2 : 1;
+            updatePlayerStatus();
+            loadNextQuestion();
+
+            resultMessage.style.display = "none";
+            nextButton.style.display = "none";
+        }
+
+        /**
+         * Prepara la siguiente ronda del juego.
+         * Reinicia las vidas y contadores, y vuelve a la pantalla de configuración de nombres para la nueva ronda.
+         */
+        function nextRound() {
+            currentRound++; // Incrementa el número de ronda
+            player1Lives = 3; // Reinicia vidas del jugador 1
+            player2Lives = 3; // Reinicia vidas del jugador 2
+            questionsAnswered = 0; // Reinicia el contador de preguntas respondidas
+            // usedQuestions ya no es necesario aquí, el seguimiento global se hace con usedQuestionIdsGlobal
+            // usedQuestions = []; // Importante: Limpia las preguntas usadas para la nueva ronda
+
+            updateSetupTitle(); // Actualiza el título de la pantalla de configuración de nombres
+            // clearInputs(); // Si se desea que los jugadores vuelvan a introducir sus nombres, descomentar esta línea
+            nameSetupScreen.style.display = "flex"; // Muestra la pantalla de configuración de nombres
+            timerElement.style.display = "inline-flex"; // Asegura que el temporizador sea visible para la siguiente ronda
+
+            nextRoundButton.style.display = "none"; // Oculta el botón de siguiente ronda
+            restartButton.style.display = "none"; // Oculta el botón de reiniciar
+        }
+
+        /**
+         * Reinicia el juego por completo, volviendo a la primera ronda y limpiando nombres.
+         */
+        function restartGame() {
+            currentRound = 1; // Vuelve a la primera ronda
+            player1Lives = 3; // Reinicia vidas del jugador 1
+            player2Lives = 3; // Reinicia vidas del jugador 2
+            questionsAnswered = 0; // Reinicia el contador de preguntas respondidas
+            usedQuestionIdsGlobal = new Set(); // IMPORTANTE: Limpia las preguntas usadas para un nuevo comienzo del juego
+            gameStarted = false; // Reinicia el estado de juego iniciado
+
+            updateSetupTitle(); // Actualiza el título de la pantalla de configuración
+            clearInputs(); // Limpia los nombres para un reinicio completo
+            nameSetupScreen.style.display = "flex"; // Muestra la pantalla de configuración de nombres
+            timerElement.style.display = "inline-flex"; // Asegura que el temporizador sea visible
+
+            nextRoundButton.style.display = "none"; // Oculta los botones hasta que el juego comience de nuevo
+            restartButton.style.display = "none";
+        }
+        // Event listeners
+        nextButton.addEventListener("click", nextPlayer);
+        restartButton.addEventListener("click", restartGame);
+        // El botón nextRoundButton ya no tiene un event listener directo, ya que la transición es automática.
+        // nextRoundButton.addEventListener("click", nextRound);
+        // Llamada inicial para configurar los nombres de los jugadores
+        setupPlayerNames();
+    </script>
+</body>
+</html>
+�
